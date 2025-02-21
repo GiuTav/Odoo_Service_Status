@@ -7,6 +7,11 @@ import psutil
 from flask_wtf.csrf import CSRFProtect
 from configparser import ConfigParser, NoSectionError
 
+# Dichiarazione dei valori
+SECRET_KEY = 'your_secret_key'
+USERNAME = 'your_user'
+PASSWORD_HASH = bcrypt.hashpw('your_password'.encode('utf-8'), bcrypt.gensalt(rounds=12))
+
 # Carica la configurazione
 if len(sys.argv) > 1:
     config_file_path = sys.argv[1]
@@ -21,12 +26,9 @@ if not config.has_section('settings'):
     raise NoSectionError('settings')
 
 app = Flask(__name__)
-app.secret_key = config.get('settings', 'SECRET_KEY')
+app.secret_key = SECRET_KEY
 
 csrf = CSRFProtect(app)
-
-USERNAME = config.get('settings', 'USERNAME')
-PASSWORD_HASH = bcrypt.hashpw(config.get('settings', 'PASSWORD').encode('utf-8'), bcrypt.gensalt(rounds=12))
 
 # Trova tutti i servizi Odoo automaticamente
 def get_odoo_services():
@@ -87,7 +89,8 @@ def login():
         if not username or not password:
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
-            session['logged_in'] = True
+            return redirect(url_for('dashboard'))
+        return render_template('login.html', error="Credenziali errate")
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
@@ -145,4 +148,3 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
