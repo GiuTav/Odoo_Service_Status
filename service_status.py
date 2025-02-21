@@ -9,21 +9,17 @@ app.secret_key = 'DZW"6tzWD2"-JIen@m+m3i'  # Cambia questa chiave con una più s
 # Hash della password per maggiore sicurezza
 PASSWORD_HASH = bcrypt.hashpw(b"DinAzi3015", bcrypt.gensalt())
 
-
 # Trova tutti i servizi Odoo automaticamente
 def get_odoo_services():
     try:
-        result = subprocess.run(["systemctl", "list-unit-files", "--type=service", "--no-pager"], capture_output=True,
-                                text=True)
+        result = subprocess.run(["systemctl", "list-unit-files", "--type=service", "--no-pager"], capture_output=True, text=True)
         services = [line.split()[0] for line in result.stdout.splitlines() if "odoo" in line]
         return services
     except Exception as e:
         return []
 
-
 SERVICES = get_odoo_services() + ["postgresql"]  # Aggiunto PostgreSQL
 USERNAME = "admin"
-
 
 def execute_service_command(command, service_name, sudo_password):
     try:
@@ -35,7 +31,6 @@ def execute_service_command(command, service_name, sudo_password):
     except Exception as e:
         return f"Errore: {str(e)}"
 
-
 def get_service_status(service_name):
     try:
         result = subprocess.run(["systemctl", "is-active", service_name], capture_output=True, text=True)
@@ -43,23 +38,19 @@ def get_service_status(service_name):
     except Exception as e:
         return f"Errore: {str(e)}"
 
-
 def get_service_logs(service_name):
     try:
-        result = subprocess.run(["journalctl", "-u", service_name, "--no-pager", "-n", "100"], capture_output=True,
-                                text=True)
+        result = subprocess.run(["journalctl", "-u", service_name, "--no-pager", "-n", "100"], capture_output=True, text=True)
         return result.stdout.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
 
-
 def get_disk_usage():
     try:
         usage = psutil.disk_usage('/')
-        return f"{usage.used / (1024 ** 3):.2f} GB / {usage.total / (1024 ** 3):.2f} GB ({usage.percent}%)"
+        return {"used": usage.used / (1024 ** 3), "total": usage.total / (1024 ** 3), "percent": usage.percent}
     except Exception as e:
-        return f"Errore: {str(e)}"
-
+        return {"error": str(e)}
 
 def get_hostname():
     try:
@@ -67,7 +58,6 @@ def get_hostname():
         return result.stdout.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
-
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -80,7 +70,6 @@ def login():
         return render_template('login.html', error="Credenziali errate")
     return render_template('login.html')
 
-
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
@@ -90,7 +79,6 @@ def dashboard():
     statuses = {service: get_service_status(service) for service in SERVICES}
     return render_template('dashboard.html', disk_usage=disk_usage, hostname=hostname, statuses=statuses)
 
-
 @app.route('/status')
 def status():
     if not session.get('logged_in'):
@@ -98,6 +86,11 @@ def status():
     statuses = {service: get_service_status(service) for service in SERVICES}
     return jsonify(statuses)
 
+@app.route('/disk_usage')
+def disk_usage():
+    if not session.get('logged_in'):
+        return jsonify({"error": "Unauthorized"}), 403
+    return jsonify(get_disk_usage())
 
 @app.route('/control', methods=['POST'])
 def control_service():
@@ -112,23 +105,26 @@ def control_service():
         message = "Servizio non valido"
     return jsonify({"message": message})
 
-
 @app.route('/logs/<service>')
 def logs(service):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    return render_template('logs.html', service=service)
+
+@app.route('/logs_data/<service>')
+def logs_data(service):
+    if not session.get('logged_in'):
+        return jsonify({"error": "Unauthorized"}), 403
     if service in SERVICES:
         log_output = get_service_logs(service)
     else:
         log_output = "Servizio non valido"
-    return render_template('logs.html', log_output=log_output, service=service)
-
+    return jsonify({"log_output": log_output})
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
