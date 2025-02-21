@@ -40,10 +40,12 @@ def get_service_status(service_name):
 
 def get_service_logs(service_name):
     try:
-        result = subprocess.run(["journalctl", "-u", service_name, "--no-pager", "-n", "200"], capture_output=True, text=True)
+        result = subprocess.run(["journalctl", "-u", service_name, "--no-pager", "-n", "200", "--output", "cat"],
+                                capture_output=True, text=True)
         return result.stdout.strip()
     except Exception as e:
         return f"Errore: {str(e)}"
+
 
 def get_disk_usage():
     try:
