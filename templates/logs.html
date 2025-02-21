@@ -41,6 +41,18 @@
         }
     </style>
 </head>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/logs_data/{{ service }}")
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector("pre").innerText = data.log_output;
+            })
+            .catch(error => {
+                console.error("Errore nel recupero dei log:", error);
+            });
+    });
+</script>
 <body>
     <h2>Log del Servizio: {{ service }}</h2>
     <pre>{{ log_output }}</pre>
