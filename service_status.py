@@ -5,7 +5,7 @@ import subprocess
 import bcrypt
 import psutil
 from flask_wtf.csrf import CSRFProtect
-from configparser import ConfigParser
+from configparser import ConfigParser, NoSectionError
 
 # Carica la configurazione
 if len(sys.argv) > 1:
@@ -15,6 +15,10 @@ else:
 
 config = ConfigParser()
 config.read(config_file_path)
+
+# Verifica se la sezione 'settings' esiste
+if not config.has_section('settings'):
+    raise NoSectionError('settings')
 
 app = Flask(__name__)
 app.secret_key = config.get('settings', 'SECRET_KEY')
@@ -84,8 +88,6 @@ def login():
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
             session['logged_in'] = True
-            return redirect(url_for('dashboard'))
-        return render_template('login.html', error="Credenziali errate")
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
