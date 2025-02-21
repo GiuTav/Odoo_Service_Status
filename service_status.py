@@ -1,13 +1,28 @@
+import os
+import sys
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import subprocess
 import bcrypt
 import psutil
+from flask_wtf.csrf import CSRFProtect
+from configparser import ConfigParser
+
+# Carica la configurazione
+if len(sys.argv) > 1:
+    config_file_path = sys.argv[1]
+else:
+    config_file_path = 'config.cfg'
+
+config = ConfigParser()
+config.read(config_file_path)
 
 app = Flask(__name__)
-app.secret_key = 'DZW"6tzWD2"-JIen@m+m3i'  # Cambia questa chiave con una più sicura
+app.secret_key = config.get('settings', 'SECRET_KEY')
 
-# Hash della password per maggiore sicurezza
-PASSWORD_HASH = bcrypt.hashpw(b"DinAzi3015", bcrypt.gensalt())
+csrf = CSRFProtect(app)
+
+USERNAME = config.get('settings', 'USERNAME')
+PASSWORD_HASH = bcrypt.hashpw(config.get('settings', 'PASSWORD').encode('utf-8'), bcrypt.gensalt(rounds=12))
 
 # Trova tutti i servizi Odoo automaticamente
 def get_odoo_services():
@@ -19,7 +34,6 @@ def get_odoo_services():
         return []
 
 SERVICES = get_odoo_services() + ["postgresql"]  # Aggiunto PostgreSQL
-USERNAME = "admin"
 
 def execute_service_command(command, service_name, sudo_password):
     try:
@@ -65,7 +79,8 @@ def get_hostname():
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
-        password = request.form.get('password').encode('utf-8')
+        if not username or not password:
+            return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
             session['logged_in'] = True
             return redirect(url_for('dashboard'))
