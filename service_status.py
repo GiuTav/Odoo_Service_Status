@@ -14,7 +14,6 @@ PASSWORD_HASH = bcrypt.hashpw('your_password'.encode('utf-8'), bcrypt.gensalt(ro
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-
 csrf = CSRFProtect(app)
 
 # Trova tutti i servizi Odoo automaticamente
@@ -74,7 +73,7 @@ def login():
         password = request.form.get('password')
         if not username or not password:
             return render_template('login.html', error="Username e password sono obbligatori")
-        if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
+        if username == USERNAME and bcrypt.checkpw(password.encode('utf-8'), PASSWORD_HASH):
             session['logged_in'] = True
             return redirect(url_for('dashboard'))
     return render_template('login.html')
@@ -105,14 +104,31 @@ def disk_usage():
 def control_service():
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
-    service = request.json.get('service')
-    action = request.json.get('action')
-    sudo_password = request.json.get('password')
+
+    try:
+        print("DEBUG - Raw data ricevuti:", request.data)  # 👈 Stampa i dati grezzi ricevuti
+        print("DEBUG - Headers:", request.headers)  # 👈 Stampa gli headers della richiesta
+        data = request.get_json(force=True)
+        print("DEBUG - JSON decodificato:", data)  # 👈 Stampa il JSON effettivo ricevuto
+    except Exception as e:
+        print("ERRORE JSON:", str(e))  # 👈 Mostra l'errore
+        return jsonify({"error": "Errore nel parsing del JSON"}), 400
+
+    service = data.get('service')
+    action = data.get('action')
+    sudo_password = data.get('password')
+
+    if not service or not action or not sudo_password:
+        print("ERRORE - Dati mancanti:", data)  # 👈 Mostra i dati effettivamente ricevuti
+        return jsonify({"error": "Dati mancanti"}), 400
+
     if service in SERVICES:
         message = execute_service_command(action, service, sudo_password)
     else:
         message = "Servizio non valido"
+
     return jsonify({"message": message})
+
 
 @app.route('/logs/<service>')
 def logs(service):
