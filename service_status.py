@@ -12,19 +12,6 @@ SECRET_KEY = 'your_secret_key'
 USERNAME = 'your_user'
 PASSWORD_HASH = bcrypt.hashpw('your_password'.encode('utf-8'), bcrypt.gensalt(rounds=12))
 
-# Carica la configurazione
-if len(sys.argv) > 1:
-    config_file_path = sys.argv[1]
-else:
-    config_file_path = 'config.cfg'
-
-config = ConfigParser()
-config.read(config_file_path)
-
-# Verifica se la sezione 'settings' esiste
-if not config.has_section('settings'):
-    raise NoSectionError('settings')
-
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
@@ -66,7 +53,6 @@ def get_service_logs(service_name):
     except Exception as e:
         return f"Errore: {str(e)}"
 
-
 def get_disk_usage():
     try:
         usage = psutil.disk_usage('/')
@@ -87,10 +73,11 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         if not username or not password:
-            return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
+            session['logged_in'] = True
             return redirect(url_for('dashboard'))
-        return render_template('login.html', error="Credenziali errate")
+    return render_template('login.html')
+
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
@@ -148,3 +135,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
