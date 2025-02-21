@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log - {{ service }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        pre {
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-width: 90%;
+            margin: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            height: 400px;
+            overflow-y: scroll;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        a:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Log del Servizio: {{ service }}</h2>
+    <pre>{{ log_output }}</pre>
+    <a href="{{ url_for('dashboard') }}">Torna alla Dashboard</a>
+</body>
+</html>
