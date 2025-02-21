@@ -14,7 +14,7 @@
     <div class="card p-3 mb-3">
         <h5>Informazioni Server</h5>
         <p><strong>Nome del server:</strong> {{ hostname }}</p>
-        <p><strong>Capienza del disco:</strong> {{ disk_usage }}</p>
+        <p><strong>Capienza del disco:</strong> {{ disk_usage.used|round(2) }} GB utilizzati su {{ disk_usage.total|round(2) }} GB ({{ disk_usage.percent }}%)</p>
     </div>
 
     <div class="card p-3">
