@@ -17,8 +17,8 @@ Prima di avviare l'applicazione, crea un file di configurazione (ad esempio, `co
 ```ini
 [settings]
 SECRET_KEY = your_secret_key
-USERNAME = admin
-PASSWORD = DinAzi3015
+USERNAME = your_user
+PASSWORD = your_password
 ```
 
 ## Utilizzo
