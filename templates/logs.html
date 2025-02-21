@@ -42,7 +42,7 @@
     </style>
 </head>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    function updateLogs() {
         fetch("/logs_data/{{ service }}")
             .then(response => response.json())
             .then(data => {
@@ -51,7 +51,13 @@
             .catch(error => {
                 console.error("Errore nel recupero dei log:", error);
             });
-    });
+    }
+
+    // Aggiorna i log ogni 5 secondi
+    setInterval(updateLogs, 5000);
+
+    // Carica i log inizialmente
+    updateLogs();
 </script>
 <body>
     <h2>Log del Servizio: {{ service }}</h2>
