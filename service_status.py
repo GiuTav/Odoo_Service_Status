@@ -79,14 +79,13 @@ def get_hostname():
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
+        password = request.form.get('password')
         if not username or not password:
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password, PASSWORD_HASH):
             session['logged_in'] = True
             return redirect(url_for('dashboard'))
         return render_template('login.html', error="Credenziali errate")
-    return render_template('login.html')
-
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
