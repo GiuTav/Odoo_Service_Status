@@ -3,135 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Servizi</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-</head>
-<body class="bg-light">
-
-<div class="container mt-5">
-    <h1 class="text-center">Dashboard Servizi</h1>
-
-    <div class="card p-3 mb-3">
-        <h5>Informazioni Server</h5>
-        <p><strong>Nome del server:</strong> {{ hostname }}</p>
-        <p><strong>Capienza del disco:</strong> {{ disk_usage.used|round(2) }} GB utilizzati su {{ disk_usage.total|round(2) }} GB ({{ disk_usage.percent }}%)</p>
-    </div>
-
-    <div class="card p-3">
-        <h5>Stato dei Servizi</h5>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Servizio</th>
-                    <th>Stato</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for service, status in statuses.items() %}
-                <tr>
-                    <td>{{ service }}</td>
-                    <td>
-                        {% if status == "active" %}
-                            <span class="badge bg-success">Attivo</span>
-                        {% else %}
-                            <span class="badge bg-danger">Non attivo</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-success" onclick="showPasswordModal('{{ service }}', 'start')">Avvia</button>
-                        <button class="btn btn-sm btn-warning" onclick="showPasswordModal('{{ service }}', 'restart')">Riavvia</button>
-                        <button class="btn btn-sm btn-danger" onclick="showPasswordModal('{{ service }}', 'stop')">Arresta</button>
-                        <a href="/logs/{{ service }}" class="btn btn-sm btn-secondary">Log</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <a href="/logout" class="btn btn-danger mt-3">Logout</a>
-</div>
-
-<!-- Modal per inserire la password sudo -->
-<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Autenticazione richiesta</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Inserisci la password sudo per procedere:</p>
-                <input type="password" id="sudoPassword" class="form-control">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
-                <button type="button" class="btn btn-primary" onclick="sendServiceCommand()">Conferma</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let selectedService = "";
-    let selectedAction = "";
-
-    function showPasswordModal(service, action) {
-        selectedService = service;
-        selectedAction = action;
-        new bootstrap.Modal(document.getElementById('passwordModal')).show();
-    }
-
-    function sendServiceCommand() {
-        let sudoPassword = document.getElementById("sudoPassword").value;
-        if (!sudoPassword) {
-            alert("Devi inserire la password!");
-            return;
+    <title>Log - {{ service }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
         }
+        h2 {
+            color: #333;
+        }
+        pre {
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-width: 90%;
+            margin: auto;
+            text-align: left;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            height: 400px;
+            overflow-y: scroll;
+            background-color: black;
+            color: green;
+            font-size: 14px;
+        }
+        .log-timestamp {
+            color: yellow;
+            font-weight: bold;
+        }
+        .log-warning {
+            color: orange;
+            font-weight: bold;
+        }
+        .log-error {
+            color: red;
+            font-weight: bold;
+        }
+        a, button {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+        }
+        a:hover, button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<script>
+    let updateInterval;
+    let isPaused = false;
 
-        // Legge il token CSRF dal meta tag nel file HTML
-        let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-
-        let payload = JSON.stringify({
-            service: selectedService,
-            action: selectedAction,
-            password: sudoPassword
-        });
-
-        console.log("DEBUG - Inviando payload:", payload);
-
-        fetch("/control", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken  // 🔴 Aggiunge il token CSRF agli headers
-            },
-            body: payload
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-            closeModal();
-        })
-        .catch(error => {
-            console.error("ERRORE:", error);
-            alert("Errore: " + error.message);
-        });
+    function updateLogs() {
+        if (!isPaused) {
+            fetch("/logs_data/{{ service }}?t=" + new Date().getTime()) // Evita la cache
+                .then(response => response.json())
+                .then(data => {
+                    const logElement = document.querySelector("pre");
+                    logElement.innerHTML = formatLogs(data.log_output);
+                    logElement.scrollTop = logElement.scrollHeight; // Scorri fino in fondo
+                })
+                .catch(error => {
+                    console.error("Errore nel recupero dei log:", error);
+                });
+        }
     }
-    function closeModal() {
-        document.getElementById("passwordModal").style.display = "none";
+
+    function formatLogs(logs) {
+        return logs
+            .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>') // Evidenzia timestamp
+            .replace(/WARNING/g, '<span class="log-warning">WARNING</span>') // Evidenzia WARNING
+            .replace(/ERROR/g, '<span class="log-error">ERROR</span>'); // Evidenzia ERROR
     }
 
+    function togglePause() {
+        isPaused = !isPaused;
+        document.getElementById("pauseButton").innerText = isPaused ? "Riprendi" : "Pausa";
+    }
 
+    // Aggiorna i log ogni 5 secondi
+    updateInterval = setInterval(updateLogs, 5000);
+
+    // Carica i log inizialmente
+    updateLogs();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<body>
+    <h2>Log del Servizio: {{ service }}</h2>
+    <pre>{{ log_output }}</pre>
+    <button id="pauseButton" onclick="togglePause()">Pausa</button>
+    <a href="{{ url_for('dashboard') }}">Torna alla Dashboard</a>
 </body>
 </html>

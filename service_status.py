@@ -6,11 +6,14 @@ import bcrypt
 import psutil
 from flask_wtf.csrf import CSRFProtect
 from configparser import ConfigParser, NoSectionError
+from dotenv import load_dotenv
 
-# Dichiarazione dei valori
-SECRET_KEY = 'your_secret_key'
-USERNAME = 'your_user'
-PASSWORD_HASH = bcrypt.hashpw('your_password'.encode('utf-8'), bcrypt.gensalt(rounds=12))
+# Carica le variabili dal file .env
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+USERNAME = os.getenv("USERNAME")
+PASSWORD_HASH = os.getenv("PASSWORD").encode('utf-8')  # Convertiamo la stringa in bytes
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -106,12 +109,12 @@ def control_service():
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        print("DEBUG - Raw data ricevuti:", request.data)  # 👈 Stampa i dati grezzi ricevuti
-        print("DEBUG - Headers:", request.headers)  # 👈 Stampa gli headers della richiesta
+        print("DEBUG - Raw data ricevuti:", request.data)
+        print("DEBUG - Headers:", request.headers)
         data = request.get_json(force=True)
-        print("DEBUG - JSON decodificato:", data)  # 👈 Stampa il JSON effettivo ricevuto
+        print("DEBUG - JSON decodificato:", data)
     except Exception as e:
-        print("ERRORE JSON:", str(e))  # 👈 Mostra l'errore
+        print("ERRORE JSON:", str(e))
         return jsonify({"error": "Errore nel parsing del JSON"}), 400
 
     service = data.get('service')
@@ -119,7 +122,7 @@ def control_service():
     sudo_password = data.get('password')
 
     if not service or not action or not sudo_password:
-        print("ERRORE - Dati mancanti:", data)  # 👈 Mostra i dati effettivamente ricevuti
+        print("ERRORE - Dati mancanti:", data)
         return jsonify({"error": "Dati mancanti"}), 400
 
     if service in SERVICES:
@@ -128,7 +131,6 @@ def control_service():
         message = "Servizio non valido"
 
     return jsonify({"message": message})
-
 
 @app.route('/logs/<service>')
 def logs(service):
