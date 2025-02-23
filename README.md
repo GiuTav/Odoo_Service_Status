@@ -1,43 +1,64 @@
-# Odoo_Service_Status
+# Odoo Service Status
 
-Questa applicazione consente di monitorare e controllare lo stato di vari servizi sul tuo server. Fornisce un'interfaccia web per visualizzare i log, controllare l'utilizzo del disco e gestire lo stato dei servizi.
+## 📌 Descrizione
+Questa applicazione web consente di monitorare e controllare lo stato dei servizi Odoo e PostgreSQL su un server Linux. Gli utenti possono avviare, arrestare e riavviare i servizi, nonché visualizzare i log direttamente dall'interfaccia web.
 
-## Installazione
+## 🚀 Installazione
+Per installare l'applicazione, è **consigliato** creare un ambiente virtuale `virtualenv` per mantenere le dipendenze isolate.
 
-Per eseguire questa applicazione, è necessario installare le librerie richieste elencate nel file `requirements.txt`. Puoi installarle utilizzando il seguente comando:
+### **1️⃣ Creazione di un ambiente virtuale**
+```sh
+python3 -m venv venv
+source venv/bin/activate  # Per Linux/macOS
+venv\Scripts\activate    # Per Windows
+```
 
-```bash
+### **2️⃣ Installazione delle dipendenze**
+```sh
 pip install -r requirements.txt
 ```
 
-## Configurazione
-
-Prima di avviare l'applicazione, crea un file di configurazione (ad esempio, `config.cfg`) con il seguente contenuto:
+## 🔑 Configurazione del file `.env`
+Per far funzionare l'applicazione, è necessario creare un file `.env` nella directory principale del progetto con le seguenti variabili di ambiente:
 
 ```ini
-[settings]
-SECRET_KEY = your_secret_key
-USERNAME = your_user
-PASSWORD = your_password
+SECRET_KEY=tuo_secret_key
+USERNAME=tuo_username
+PASSWORD=tuo_password_hash
 ```
 
-## Utilizzo
+⚠️ **Importante:** La password deve essere memorizzata come hash bcrypt per garantire la sicurezza.
 
-Dopo aver creato il file di configurazione e installato le librerie richieste, puoi avviare l'applicazione specificando il file di configurazione come parametro:
+### **🔐 Generazione dell'hash della password**
+Per generare un hash della password, utilizza il seguente script Python:
 
-```bash
-gunicorn -w 4 -b 0.0.0.0:8000 service_status:app /path/to/your/config.cfg
+```python
+import bcrypt
+
+password = "tua_password"
+hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+print(hashed_password.decode('utf-8'))
 ```
 
-Sostituisci `/path/to/your/config.cfg` con il percorso effettivo del tuo file di configurazione e `service_status` con il nome del tuo modulo principale se è diverso.
+Copia l'output e incollalo nel file `.env` nella variabile `PASSWORD`.
 
-## Funzionalità
+## 🚀 Avvio dell'Applicazione
+Una volta configurato tutto, avvia l'applicazione con:
 
-- Monitorare lo stato di vari servizi
-- Visualizzare i log dei servizi con aggiornamenti in tempo reale
-- Controllare l'utilizzo del disco
-- Controllare i servizi (avvia, ferma, riavvia)
+```sh
+python service_status.py
+```
 
-## Licenza
+Ora puoi accedere all'applicazione tramite il browser all'indirizzo:
+```
+http://127.0.0.1:5000/
+```
 
-Questo progetto è concesso in licenza sotto la Licenza MIT.
+## 📜 Funzionalità Principali
+✅ Monitoraggio dello stato dei servizi Odoo e PostgreSQL
+✅ Avvio, Arresto e Riavvio dei servizi
+✅ Visualizzazione dei log
+✅ Protezione con autenticazione
+
+---
+Made with ❤️ by Giuseppe Tavormina 🚀
