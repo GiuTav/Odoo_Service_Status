@@ -1,6 +1,3 @@
-Sure, you can change the background color of the logs to black and the text color to green by updating the CSS for the `<pre>` tag. Here is the updated `templates/logs.html` file:
-
-```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -28,8 +25,23 @@ Sure, you can change the background color of the logs to black and the text colo
             word-wrap: break-word;
             height: 400px;
             overflow-y: scroll;
+            background-color: black;
+            color: green;
+            font-size: 14px;
         }
-        a {
+        .log-timestamp {
+            color: yellow;
+            font-weight: bold;
+        }
+        .log-warning {
+            color: orange;
+            font-weight: bold;
+        }
+        .log-error {
+            color: red;
+            font-weight: bold;
+        }
+        a, button {
             display: inline-block;
             margin-top: 20px;
             text-decoration: none;
@@ -37,21 +49,10 @@ Sure, you can change the background color of the logs to black and the text colo
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
-        }
-        a:hover {
-            background: #0056b3;
-        }
-        button {
-            display: inline-block;
-            margin-top: 20px;
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
             cursor: pointer;
+            border: none;
         }
-        button:hover {
+        a:hover, button:hover {
             background: #0056b3;
         }
     </style>
@@ -62,17 +63,24 @@ Sure, you can change the background color of the logs to black and the text colo
 
     function updateLogs() {
         if (!isPaused) {
-            fetch("/logs_data/{{ service }}?t=" + new Date().getTime()) // Aggiunge un parametro unico per evitare la cache
+            fetch("/logs_data/{{ service }}?t=" + new Date().getTime()) // Evita la cache
                 .then(response => response.json())
                 .then(data => {
                     const logElement = document.querySelector("pre");
-                    logElement.innerText = data.log_output;
+                    logElement.innerHTML = formatLogs(data.log_output);
                     logElement.scrollTop = logElement.scrollHeight; // Scorri fino in fondo
                 })
                 .catch(error => {
                     console.error("Errore nel recupero dei log:", error);
                 });
         }
+    }
+
+    function formatLogs(logs) {
+        return logs
+            .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>') // Evidenzia timestamp
+            .replace(/WARNING/g, '<span class="log-warning">WARNING</span>') // Evidenzia WARNING
+            .replace(/ERROR/g, '<span class="log-error">ERROR</span>'); // Evidenzia ERROR
     }
 
     function togglePause() {
