@@ -9,13 +9,14 @@
 <body class="d-flex justify-content-center align-items-center vh-100">
     <div class="card p-4 shadow">
         <h2 class="text-center">Login</h2>
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('login', _external=True) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label class="form-label">Username</label>
                 <input type="text" name="username" class="form-control" required>
             </div>
             <div class="mb-3">
+                <label class="form-label">Password</label>
                 <input type="password" name="password" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary w-100">Accedi</button>

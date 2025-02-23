@@ -15,7 +15,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 USERNAME = os.getenv("USERNAME")
 PASSWORD_HASH = os.getenv("PASSWORD").encode('utf-8')  # Convertiamo la stringa in bytes
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/service/static', static_folder='static', subdomain_matching=True)
+app.config['APPLICATION_ROOT'] = '/service'
 app.secret_key = SECRET_KEY
 csrf = CSRFProtect(app)
 
