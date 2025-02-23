@@ -78,8 +78,21 @@ def login():
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password.encode('utf-8'), PASSWORD_HASH):
             session['logged_in'] = True
-            return redirect(url_for('/dashboard'))
+            return redirect(url_for('dashboard'))
     return render_template('login.html')
+
+@app.before_request
+def fix_proxy_headers():
+    if request.headers.get('X-Forwarded-Proto') == 'https':
+        request.environ['wsgi.url_scheme'] = 'https'
+
+app.config.update(
+    SESSION_COOKIE_PATH="/",
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    WTF_CSRF_TIME_LIMIT=None  # Disabilita il timeout del CSRF Token
+)
 
 @app.route('/dashboard')
 def dashboard():
