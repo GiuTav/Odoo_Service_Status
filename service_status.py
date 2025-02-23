@@ -70,7 +70,7 @@ def get_hostname():
     except Exception as e:
         return f"Errore: {str(e)}"
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/service/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -88,14 +88,14 @@ def fix_proxy_headers():
         request.environ['wsgi.url_scheme'] = 'https'
 
 app.config.update(
-    SESSION_COOKIE_PATH="/",
+    SESSION_COOKIE_PATH="/service",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     WTF_CSRF_TIME_LIMIT=None  # Disabilita il timeout del CSRF Token
 )
 
-@app.route('/dashboard')
+@app.route('/service/dashboard')
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
@@ -104,39 +104,29 @@ def dashboard():
     statuses = {service: get_service_status(service) for service in SERVICES}
     return render_template('dashboard.html', disk_usage=disk_usage, hostname=hostname, statuses=statuses)
 
-@app.route('/status')
+@app.route('/service/status')
 def status():
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
     statuses = {service: get_service_status(service) for service in SERVICES}
     return jsonify(statuses)
 
-@app.route('/disk_usage')
+@app.route('/service/disk_usage')
 def disk_usage():
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
     return jsonify(get_disk_usage())
 
-@app.route('/control', methods=['POST'])
+@app.route('/service/control', methods=['POST'])
 def control_service():
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
-
-    try:
-        print("DEBUG - Raw data ricevuti:", request.data)
-        print("DEBUG - Headers:", request.headers)
-        data = request.get_json(force=True)
-        print("DEBUG - JSON decodificato:", data)
-    except Exception as e:
-        print("ERRORE JSON:", str(e))
-        return jsonify({"error": "Errore nel parsing del JSON"}), 400
-
+    data = request.get_json(force=True)
     service = data.get('service')
     action = data.get('action')
     sudo_password = data.get('password')
 
     if not service or not action or not sudo_password:
-        print("ERRORE - Dati mancanti:", data)
         return jsonify({"error": "Dati mancanti"}), 400
 
     if service in SERVICES:
@@ -146,13 +136,13 @@ def control_service():
 
     return jsonify({"message": message})
 
-@app.route('/logs/<service>')
+@app.route('/service/logs/<service>')
 def logs(service):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     return render_template('logs.html', service=service)
 
-@app.route('/logs_data/<service>')
+@app.route('/service/logs_data/<service>')
 def logs_data(service):
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
@@ -162,7 +152,7 @@ def logs_data(service):
         log_output = "Servizio non valido"
     return jsonify({"log_output": log_output})
 
-@app.route('/logout')
+@app.route('/service/logout')
 def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
