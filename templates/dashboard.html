@@ -43,7 +43,7 @@
                         <button class="btn btn-sm btn-success" onclick="showPasswordModal('{{ service }}', 'start')">Avvia</button>
                         <button class="btn btn-sm btn-warning" onclick="showPasswordModal('{{ service }}', 'restart')">Riavvia</button>
                         <button class="btn btn-sm btn-danger" onclick="showPasswordModal('{{ service }}', 'stop')">Arresta</button>
-                        <a href="/logs/{{ service }}" class="btn btn-sm btn-secondary">Log</a>
+                        <a href="/service/logs/{{ service }}" class="btn btn-sm btn-secondary">Log</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -101,7 +101,7 @@
 
         console.log("DEBUG - Inviando payload:", payload);
 
-        fetch("/control", {
+        fetch("/service/control", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -136,7 +136,7 @@
 
     function updateStatus() {
         console.log("DEBUG - Aggiornamento stato servizi...");
-        fetch("/status")
+        fetch("/service/status")
         .then(response => response.json())
         .then(statuses => {
             console.log("DEBUG - Stato ricevuto:", statuses);
