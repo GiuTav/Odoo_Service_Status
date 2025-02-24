@@ -63,7 +63,7 @@
 
     function updateLogs() {
         if (!isPaused) {
-            fetch("/logs_data/{{ service }}?t=" + new Date().getTime()) // Evita la cache
+            fetch("/service/logs_data/{{ service }}?t=" + new Date().getTime()) // Evita la cache
                 .then(response => response.json())
                 .then(data => {
                     const logElement = document.querySelector("pre");
@@ -77,22 +77,27 @@
     }
 
     function formatLogs(logs) {
-        return logs
-            .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>') // Evidenzia timestamp
-            .replace(/WARNING/g, '<span class="log-warning">WARNING</span>') // Evidenzia WARNING
-            .replace(/ERROR/g, '<span class="log-error">ERROR</span>'); // Evidenzia ERROR
+    return logs
+        .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>')
+        .replace(/WARNING/g, '<span class="log-warning">WARNING</span>')
+        .replace(/ERROR/g, '<span class="log-error">ERROR</span>');
+}
+
+function togglePause() {
+    if (isPaused) {
+        isPaused = false;
+        updateInterval = setInterval(updateLogs, 5000); // Riavvia l'aggiornamento
+        document.getElementById("pauseButton").innerText = "Pausa";
+    } else {
+        isPaused = true;
+        clearInterval(updateInterval); // Ferma l'aggiornamento
+        document.getElementById("pauseButton").innerText = "Riprendi";
     }
+}
 
-    function togglePause() {
-        isPaused = !isPaused;
-        document.getElementById("pauseButton").innerText = isPaused ? "Riprendi" : "Pausa";
-    }
-
-    // Aggiorna i log ogni 5 secondi
-    updateInterval = setInterval(updateLogs, 5000);
-
-    // Carica i log inizialmente
-    updateLogs();
+// Avvia il ciclo di aggiornamento
+updateInterval = setInterval(updateLogs, 5000);
+updateLogs(); // Carica i log iniziali subito
 </script>
 
 <body>
