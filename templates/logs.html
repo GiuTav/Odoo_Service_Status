@@ -90,6 +90,7 @@
         console.error("Errore nel recupero dei log:", error);
     });
 }
+let serviceName = "{{ service|safe }}";
 let paused = false;  // Aggiunto per evitare l'errore
 
 function togglePause() {
