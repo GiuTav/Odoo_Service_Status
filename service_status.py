@@ -154,14 +154,13 @@ def control():
     result_message = execute_service_command(action, service_name, sudo_password)
     return jsonify({"message": result_message})
 
-@app.route('/service/logs/<service_name>')
-def logs(service_name):
+@@app.route('/service/logs_data/<service_name>')
+def logs_data(service_name):
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
 
     logs_data = get_service_logs(service_name)
-    print(logs_data)  # <-- DEBUG
-    return render_template('logs.html', logs=logs_data, service_name=service_name)
+    return jsonify({"log_output": logs_data})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

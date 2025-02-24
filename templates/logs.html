@@ -63,7 +63,7 @@
 
     function updateLogs() {
         if (!isPaused) {
-            fetch("/service/logs_data/{{ service }}?t=" + new Date().getTime()) // Evita la cache
+            fetch(`/service/logs_data/{{ service_name }}?t=${new Date().getTime()}`)
                 .then(response => response.json())
                 .then(data => {
                     const logElement = document.querySelector("pre");
