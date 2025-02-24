@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 USERNAME = os.getenv("USERNAME")
 PASSWORD_HASH = os.getenv("PASSWORD").encode('utf-8')  # Convertiamo la stringa in bytes
 
-app = Flask(__name__, static_url_path='/service/static', static_folder='static', subdomain_matching=True)
+app = Flask(__name__, static_url_path='/service/static', static_folder='static')
 app.config['APPLICATION_ROOT'] = '/service'
 app.secret_key = SECRET_KEY
 csrf = CSRFProtect(app)
@@ -70,7 +70,7 @@ def get_hostname():
     except Exception as e:
         return f"Errore: {str(e)}"
 
-@app.route('/service/', methods=['GET', 'POST'])
+@app.route('/service', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -79,7 +79,7 @@ def login():
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password.encode('utf-8'), PASSWORD_HASH):
             session['logged_in'] = True
-            return redirect(url_for('dashboard', _external=True))
+            return redirect(url_for('dashboard', _external=True, _scheme='https'))
     return render_template('login.html')
 
 @app.before_request
@@ -98,7 +98,7 @@ app.config.update(
 @app.route('/service/dashboard')
 def dashboard():
     if not session.get('logged_in'):
-        return redirect(url_for('login'))
+        return redirect(url_for('login', _external=True, _scheme='https'))
     disk_usage = get_disk_usage()
     hostname = get_hostname()
     statuses = {service: get_service_status(service) for service in SERVICES}
@@ -117,45 +117,10 @@ def disk_usage():
         return jsonify({"error": "Unauthorized"}), 403
     return jsonify(get_disk_usage())
 
-@app.route('/service/control', methods=['POST'])
-def control_service():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Unauthorized"}), 403
-    data = request.get_json(force=True)
-    service = data.get('service')
-    action = data.get('action')
-    sudo_password = data.get('password')
-
-    if not service or not action or not sudo_password:
-        return jsonify({"error": "Dati mancanti"}), 400
-
-    if service in SERVICES:
-        message = execute_service_command(action, service, sudo_password)
-    else:
-        message = "Servizio non valido"
-
-    return jsonify({"message": message})
-
-@app.route('/service/logs/<service>')
-def logs(service):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return render_template('logs.html', service=service)
-
-@app.route('/service/logs_data/<service>')
-def logs_data(service):
-    if not session.get('logged_in'):
-        return jsonify({"error": "Unauthorized"}), 403
-    if service in SERVICES:
-        log_output = get_service_logs(service)
-    else:
-        log_output = "Servizio non valido"
-    return jsonify({"log_output": log_output})
-
 @app.route('/service/logout')
 def logout():
     session.pop('logged_in', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('login', _external=True, _scheme='https'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
