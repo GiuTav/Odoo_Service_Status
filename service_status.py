@@ -70,6 +70,7 @@ def get_hostname():
     except Exception as e:
         return f"Errore: {str(e)}"
 
+@app.route('/service/')
 @app.route('/service', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -79,8 +80,12 @@ def login():
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password.encode('utf-8'), PASSWORD_HASH):
             session['logged_in'] = True
-            return redirect(url_for('dashboard', _external=True, _scheme='https'))
+            return redirect(url_for('dashboard', _external=True, _scheme='https', _anchor=''))
     return render_template('login.html')
+
+@app.route('/service/')
+def service_redirect():
+    return redirect(url_for('login', _external=True, _scheme='https'))
 
 @app.before_request
 def fix_proxy_headers():
