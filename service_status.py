@@ -127,5 +127,22 @@ def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login', _external=True, _scheme='https'))
 
+@app.route('/service/control', methods=['POST'])
+def control():
+    if not session.get('logged_in'):
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.get_json()
+    service_name = data.get("service")
+    action = data.get("action")
+    sudo_password = data.get("password")
+
+    if not service_name or not action or not sudo_password:
+        return jsonify({"error": "Dati mancanti"}), 400
+
+    result_message = execute_service_command(action, service_name, sudo_password)
+    return jsonify({"message": result_message})
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
