@@ -79,7 +79,7 @@ def login():
             return render_template('login.html', error="Username e password sono obbligatori")
         if username == USERNAME and bcrypt.checkpw(password.encode('utf-8'), PASSWORD_HASH):
             session['logged_in'] = True
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard', _external=True))
     return render_template('login.html')
 
 @app.before_request
