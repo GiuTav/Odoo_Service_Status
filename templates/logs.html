@@ -90,15 +90,34 @@
         console.error("Errore nel recupero dei log:", error);
     });
 }
+let paused = false;  // Aggiunto per evitare l'errore
 
-    function togglePause() {
-        isPaused = !isPaused;
-        document.getElementById("pauseButton").innerText = isPaused ? "Riprendi" : "Pausa";
-    }
+function togglePause() {
+    paused = !paused;
+    let pauseButton = document.getElementById("pauseButton");
+    pauseButton.innerText = paused ? "Riprendi" : "Pausa";
+}
 
-    document.addEventListener("DOMContentLoaded", function() {
-        intervalID = setInterval(updateLogs, 5000); // Aggiorna ogni 5 secondi
+function updateLogs() {
+    if (paused) return;  // Se il log è in pausa, non aggiornare
+
+    fetch(`/service/logs_data/${serviceName}?nocache=${new Date().getTime()}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Errore nel recupero dei log");
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById("logContent").innerText = data.log_output;
+    })
+    .catch(error => {
+        console.error("Errore nel recupero dei log:", error);
     });
+}
+
+// Avvia l'aggiornamento automatico ogni 5 secondi
+setInterval(updateLogs, 5000);
 </script>
 </body>
 </html>
