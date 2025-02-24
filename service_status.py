@@ -70,6 +70,17 @@ def get_hostname():
     except Exception as e:
         return f"Errore: {str(e)}"
 
+def get_service_logs(service_name):
+    try:
+        result = subprocess.run(
+            ["journalctl", "-u", service_name, "--no-pager", "-n", "200", "--output", "cat"],
+            capture_output=True, text=True
+        )
+        return result.stdout.strip()
+    except Exception as e:
+        return f"Errore: {str(e)}"
+
+
 @app.route('/service/')
 @app.route('/service', methods=['GET', 'POST'])
 def login():
@@ -149,8 +160,8 @@ def logs(service_name):
         return jsonify({"error": "Unauthorized"}), 403
 
     logs_data = get_service_logs(service_name)
+    print(logs_data)  # <-- DEBUG
     return render_template('logs.html', logs=logs_data, service_name=service_name)
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
