@@ -70,7 +70,7 @@ def get_hostname():
     except Exception as e:
         return f"Errore: {str(e)}"
 
-@app.route('/service/login', methods=['GET', 'POST'])
+@app.route('/service/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
