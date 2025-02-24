@@ -70,44 +70,36 @@
     <a href="/service/dashboard">Torna alla Dashboard</a>
 
     <script>
-        let updateInterval;
-        let isPaused = false;
+    let intervalID;
+    let isPaused = false;
 
-        function updateLogs() {
-            if (!isPaused) {
-                fetch(`/service/logs_data/{{ service }}?t=${new Date().getTime()}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const logElement = document.getElementById("logContainer");
-                        logElement.innerHTML = formatLogs(data.log_output);
-                        logElement.scrollTop = logElement.scrollHeight; // Scorri automaticamente in basso
-                    })
-                    .catch(error => console.error("Errore nel recupero dei log:", error));
+    function updateLogs() {
+        if (isPaused) return;  // Se è in pausa, non aggiorna i log
+
+        fetch(`/service/logs_data/{{ service }}?t=${new Date().getTime()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Errore nel recupero dei log");
             }
-        }
+            return response.json();
+        })
+        .then(data => {
+            let logContainer = document.getElementById("log-content");
+            logContainer.innerText = data.log_output;  // Aggiorna i log
+            logContainer.scrollTop = logContainer.scrollHeight;  // Scorri fino all'ultimo log
+        })
+        .catch(error => console.error("Errore nel recupero dei log:", error));
+    }
 
-        function formatLogs(logs) {
-            return logs
-                .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>')
-                .replace(/WARNING/g, '<span class="log-warning">WARNING</span>')
-                .replace(/ERROR/g, '<span class="log-error">ERROR</span>');
-        }
+    function togglePause() {
+        isPaused = !isPaused;
+        document.getElementById("pause-btn").innerText = isPaused ? "Riprendi" : "Pausa";
+    }
 
-        function togglePause() {
-            if (isPaused) {
-                isPaused = false;
-                updateInterval = setInterval(updateLogs, 5000); // Riavvia l'aggiornamento
-                document.getElementById("pauseButton").innerText = "Pausa";
-            } else {
-                isPaused = true;
-                clearInterval(updateInterval); // Ferma l'aggiornamento
-                document.getElementById("pauseButton").innerText = "Riprendi";
-            }
-        }
-
-        // Avvia il ciclo di aggiornamento automatico
-        updateInterval = setInterval(updateLogs, 5000);
-        updateLogs(); // Carica subito i log iniziali
-    </script>
+    document.addEventListener("DOMContentLoaded", function() {
+        intervalID = setInterval(updateLogs, 5000); // Aggiorna ogni 5 secondi
+        document.getElementById("pause-btn").addEventListener("click", togglePause);
+    });
+</script>
 </body>
 </html>
