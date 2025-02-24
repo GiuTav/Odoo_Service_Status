@@ -154,7 +154,7 @@ def control():
     result_message = execute_service_command(action, service_name, sudo_password)
     return jsonify({"message": result_message})
 
-@@app.route('/service/logs_data/<service_name>')
+@app.route('/service/logs_data/<service_name>')
 def logs_data(service_name):
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
