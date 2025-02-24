@@ -163,13 +163,14 @@ def logs_page(service_name):
     logs_data = get_service_logs(service_name)
     return render_template('logs.html', service=service_name, logs=logs_data)
 
-@app.route('/service/logs/<service_name>')
+@app.route('/service/logs_data/<service_name>')  # Cambiato il nome della route
 def logs_data(service_name):
     if not session.get('logged_in'):
         return jsonify({"error": "Unauthorized"}), 403
 
     logs_data = get_service_logs(service_name)
     return jsonify({"log_output": logs_data})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -74,24 +74,22 @@
     let isPaused = false;
 
     function updateLogs() {
-        if (isPaused) return;  // Se è in pausa, non aggiorna i log
+    if (paused) return;  // Se il log è in pausa, non aggiornare
 
-        fetch(`/service/logs_data/{{ service }}?nocache=${new Date().getTime()}`, {
-            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Errore nel recupero dei log");
-            }
-            return response.json();
-        })
-        .then(data => {
-            let logContainer = document.getElementById("logContainer");
-            logContainer.innerText = data.log_output;
-            logContainer.scrollTop = logContainer.scrollHeight;
-        })
-        .catch(error => console.error("Errore nel recupero dei log:", error));
-    }
+    fetch(`/service/logs_data/${serviceName}?nocache=${new Date().getTime()}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Errore nel recupero dei log");
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById("logContent").innerText = data.log_output;
+    })
+    .catch(error => {
+        console.error("Errore nel recupero dei log:", error);
+    });
+}
 
     function togglePause() {
         isPaused = !isPaused;
