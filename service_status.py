@@ -154,6 +154,15 @@ def control():
     result_message = execute_service_command(action, service_name, sudo_password)
     return jsonify({"message": result_message})
 
+
+@app.route('/service/logs/<service_name>')
+def logs_page(service_name):
+    if not session.get('logged_in'):
+        return redirect(url_for('login', _external=True, _scheme='https'))
+
+    logs_data = get_service_logs(service_name)
+    return render_template('logs.html', service=service_name, logs=logs_data)
+
 @app.route('/service/logs/<service_name>')
 def logs_data(service_name):
     if not session.get('logged_in'):
