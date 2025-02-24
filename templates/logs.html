@@ -76,7 +76,9 @@
     function updateLogs() {
         if (isPaused) return;  // Se è in pausa, non aggiorna i log
 
-        fetch(`/service/logs_data/{{ service }}?t=${new Date().getTime()}`)
+        fetch(`/service/logs_data/{{ service }}?nocache=${new Date().getTime()}`, {
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' }
+        })
         .then(response => {
             if (!response.ok) {
                 throw new Error("Errore nel recupero dei log");
@@ -84,21 +86,20 @@
             return response.json();
         })
         .then(data => {
-            let logContainer = document.getElementById("log-content");
-            logContainer.innerText = data.log_output;  // Aggiorna i log
-            logContainer.scrollTop = logContainer.scrollHeight;  // Scorri fino all'ultimo log
+            let logContainer = document.getElementById("logContainer");
+            logContainer.innerText = data.log_output;
+            logContainer.scrollTop = logContainer.scrollHeight;
         })
         .catch(error => console.error("Errore nel recupero dei log:", error));
     }
 
     function togglePause() {
         isPaused = !isPaused;
-        document.getElementById("pause-btn").innerText = isPaused ? "Riprendi" : "Pausa";
+        document.getElementById("pauseButton").innerText = isPaused ? "Riprendi" : "Pausa";
     }
 
     document.addEventListener("DOMContentLoaded", function() {
         intervalID = setInterval(updateLogs, 5000); // Aggiorna ogni 5 secondi
-        document.getElementById("pause-btn").addEventListener("click", togglePause);
     });
 </script>
 </body>
