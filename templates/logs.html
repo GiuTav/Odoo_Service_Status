@@ -57,53 +57,57 @@
         }
     </style>
 </head>
-<script>
-    let updateInterval;
-    let isPaused = false;
-
-    function updateLogs() {
-        if (!isPaused) {
-            fetch(`/service/logs_data/{{ service_name }}?t=${new Date().getTime()}`)
-                .then(response => response.json())
-                .then(data => {
-                    const logElement = document.querySelector("pre");
-                    logElement.innerHTML = formatLogs(data.log_output);
-                    logElement.scrollTop = logElement.scrollHeight; // Scorri fino in fondo
-                })
-                .catch(error => {
-                    console.error("Errore nel recupero dei log:", error);
-                });
-        }
-    }
-
-    function formatLogs(logs) {
-    return logs
-        .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>')
-        .replace(/WARNING/g, '<span class="log-warning">WARNING</span>')
-        .replace(/ERROR/g, '<span class="log-error">ERROR</span>');
-}
-
-function togglePause() {
-    if (isPaused) {
-        isPaused = false;
-        updateInterval = setInterval(updateLogs, 5000); // Riavvia l'aggiornamento
-        document.getElementById("pauseButton").innerText = "Pausa";
-    } else {
-        isPaused = true;
-        clearInterval(updateInterval); // Ferma l'aggiornamento
-        document.getElementById("pauseButton").innerText = "Riprendi";
-    }
-}
-
-// Avvia il ciclo di aggiornamento
-updateInterval = setInterval(updateLogs, 5000);
-updateLogs(); // Carica i log iniziali subito
-</script>
-
 <body>
     <h2>Log del Servizio: {{ service }}</h2>
-    <pre>{{ logs }}</pre>
+
+    <!-- Area dei log -->
+    <pre id="logContainer">{{ logs }}</pre>
+
+    <!-- Pulsante di pausa/riprendi -->
     <button id="pauseButton" onclick="togglePause()">Pausa</button>
-    <a href="{{ url_for('dashboard') }}">Torna alla Dashboard</a>
+
+    <!-- Link per tornare alla dashboard -->
+    <a href="/service/dashboard">Torna alla Dashboard</a>
+
+    <script>
+        let updateInterval;
+        let isPaused = false;
+
+        function updateLogs() {
+            if (!isPaused) {
+                fetch(`/service/logs_data/{{ service }}?t=${new Date().getTime()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const logElement = document.getElementById("logContainer");
+                        logElement.innerHTML = formatLogs(data.log_output);
+                        logElement.scrollTop = logElement.scrollHeight; // Scorri automaticamente in basso
+                    })
+                    .catch(error => console.error("Errore nel recupero dei log:", error));
+            }
+        }
+
+        function formatLogs(logs) {
+            return logs
+                .replace(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)/g, '<span class="log-timestamp">$1</span>')
+                .replace(/WARNING/g, '<span class="log-warning">WARNING</span>')
+                .replace(/ERROR/g, '<span class="log-error">ERROR</span>');
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                isPaused = false;
+                updateInterval = setInterval(updateLogs, 5000); // Riavvia l'aggiornamento
+                document.getElementById("pauseButton").innerText = "Pausa";
+            } else {
+                isPaused = true;
+                clearInterval(updateInterval); // Ferma l'aggiornamento
+                document.getElementById("pauseButton").innerText = "Riprendi";
+            }
+        }
+
+        // Avvia il ciclo di aggiornamento automatico
+        updateInterval = setInterval(updateLogs, 5000);
+        updateLogs(); // Carica subito i log iniziali
+    </script>
 </body>
 </html>
